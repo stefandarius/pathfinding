@@ -1,0 +1,14 @@
+.Matrix {
+    padding: 15px;
+    text-align: center;
+}
+
+.row {
+    display: block;
+    height: 25px;
+}
+
+.column {
+    display: inline-block;
+    width: 25px;
+}
