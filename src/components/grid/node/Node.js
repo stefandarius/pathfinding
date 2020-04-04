@@ -2,7 +2,7 @@ import React from 'react';
 import classes from './Node.module.css'
 import classNames from 'classnames'
 
-const Node = ({x, y, visited, near, path, blocked, weight, clicked, hovered, start, target, released}) => {
+const Node = ({x, y, visited, path, blocked, weight, clicked, hovered, start, target, released}) => {
 
     return (
         <div
@@ -10,7 +10,9 @@ const Node = ({x, y, visited, near, path, blocked, weight, clicked, hovered, sta
                 [classes.Node]: true,
                 [classes.blocked]: blocked,
                 [classes.start]: start,
-                [classes.target]: target
+                [classes.target]: target,
+                [classes.visited]: !path && !blocked && visited,
+                [classes.path]: path,
             })}
             onMouseOver={hovered}
             onMouseDown={clicked}

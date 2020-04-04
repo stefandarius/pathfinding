@@ -5,8 +5,11 @@ import {floor} from "lodash";
 
 const Header = () => {
 
+    const Heap = require('heap');
+
     const [visited, setVisited] = useState([]);
     const [path, setPath] = useState([]);
+    const [visualizing, setVisualizing] = useState(false);
 
     const {value1, value2, value3} = useContext(AppContext);
     const [matrix, setMatrix] = value1;
@@ -14,12 +17,67 @@ const Header = () => {
     const [target, setTarget] = value3;
 
     useEffect(() => {
-        const copy = [...matrix];
-        astar(copy, start, target);
-    }, [matrix]);
+        if (start && target && matrix) {
+            setPath([]);
+            setVisited([]);
+            const copy = JSON.parse(JSON.stringify(matrix));
+            setPath(astar(copy, start, target));
+        }
+    }, [start, target, matrix]);
 
-    const astar = (copy, start, target) => {
 
+    const astar = (grid, start, target) => {
+
+        let openList = new Heap(function (nodeA, nodeB) {
+            return nodeA.f - nodeB.f;
+        });
+
+        start.f = 0;
+        start.g = 0;
+
+        openList.push(start);
+        start.opened = true;
+
+        while (!openList.empty()) {
+            let node = openList.pop();
+            node.closed = true;
+
+            if (node.x === target.x && node.y === target.y) {
+                return traceBack(node);
+            }
+
+            let neighbors = neighbours(grid, node);
+            for (let neighbor of neighbors) {
+                if (neighbor.closed) continue;
+
+                let ng = node.g + neighbor.weight;
+                if (!neighbor.opened || ng < neighbor.g) {
+                    neighbor.g = ng;
+                    neighbor.h = neighbor.h || heuristic(neighbor, target);
+                    neighbor.f = neighbor.g + neighbor.h;
+                    neighbor.parent = node;
+
+                    if (!neighbor.opened) {
+                        openList.push(neighbor);
+                        visited.push(node);
+                        neighbor.opened = true;
+                    } else {
+                        openList.updateItem(neighbor);
+                        setVisited([...visited, node]);
+                    }
+                }
+            }
+        }
+        return [];
+    };
+
+    const traceBack = (node) => {
+        const path = [node];
+        while (node.parent) {
+            node = node.parent;
+            path.unshift(node);
+        }
+        return path;
     };
 
     const neighbours = (matrix, node) => {
@@ -27,7 +85,7 @@ const Header = () => {
         let x = node.x;
         let y = node.y;
         //West
-        if (matrix[x - 1] && matrix[x - 1][y] && !matrix[x-1][y].blocked) {
+        if (matrix[x - 1] && matrix[x - 1][y] && !matrix[x - 1][y].blocked) {
             ret.push(matrix[x - 1][y]);
         }
         // East
@@ -48,34 +106,53 @@ const Header = () => {
     const heuristic = (node1, node2) => Math.abs(node2.x - node1.x) + Math.abs(node2.y - node1.y);
 
     const onClickHandler = () => {
-        let copy = [...matrix];
-        const length = copy.length;
-        const length2 = copy[0].length;
-        for (let i = 0; i < copy.length; i++) {
-            for (let j = 0; j < copy[i].length; j++) {
-                copy[i][j] = {
-                    visited: false,
-                    path: false,
-                    near: false,
-                    blocked: false,
-                    weight: 1,
-                    start: false,
-                    target: false
-                };
+        setVisualizing(false);
+        setPath([]);
+        setVisited([]);
+        const copy = JSON.parse(JSON.stringify(matrix));
+        for (let row of copy) {
+            for (let node of row) {
+                node.blocked = false;
+                node.path = false;
+                node.visited = false;
+                node.closed = false;
+                node.opened = false;
             }
         }
-        copy[floor(length/2)][floor(length2/4)].start = true;
-        copy[floor(length/2)][floor(3*length2/4)].target = true;
         setMatrix(copy);
     };
 
+    const onVisualize = () => {
+        setVisualizing(true);
+        const copy = JSON.parse(JSON.stringify(matrix));
+        for (let node of visited) {
+            copy[node.x][node.y].visited = true;
+            setMatrix(copy);
+        }
+        for (let node of path) {
+            copy[node.x][node.y].path = true;
+            setMatrix(copy);
+        }
+        setPath([]);
+        setVisited([]);
+        setVisited([]);
+    };
+
+    const sleep = (time) => {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    };
+
+
     return (
-       <div className={classes.Header}>
-           <span className={classes.inline}><h3>Path finder</h3></span>
-           <span className={classes.inline}><button className={classes.Button}>VISUALIZE A*</button></span>
-           <span className={classes.inline}>
-               <button className={classes.Button} onClick={onClickHandler}>CLEAR GRID</button></span>
-       </div>
+        <div className={classes.Header}>
+            <span className={classes.inline}><h3>Path finder</h3></span>
+            <span className={classes.inline}>
+                <button className={classes.Button} onClick={onVisualize}>VISUALIZE A*</button>
+            </span>
+            <span className={classes.inline}>
+               <button className={classes.Button} onClick={onClickHandler}>CLEAR GRID</button>
+            </span>
+        </div>
     );
 };
 

@@ -16,8 +16,11 @@ const Matrix = ({rows, cols}) => {
 
     useEffect(() => {
 
-        const startCopy = [floor(rows/2), floor(cols/4)];
-        const targetCopy = [floor(rows/2), floor(3*cols/4)];
+        // const i = [floor(rows/2), floor(cols/4)];
+        // const j = [floor(rows/2), floor(3*cols/4)];
+
+        const i = [Math.floor(Math.random() * 25), Math.floor(Math.random() * 10)];
+        const j = [Math.floor(Math.random() * 25), Math.floor(Math.random() * 10) + 40];
         let copy = Array.from({length: rows}, () =>
             Array.from({length: cols}, () => null));
         for (let i = 0; i < copy.length; i++) {
@@ -27,69 +30,70 @@ const Matrix = ({rows, cols}) => {
                     y: j,
                     visited: false,
                     path: false,
-                    near: false,
-                    blocked: false,
+                    blocked: Math.random() < 0.2,
                     weight: 1,
                     start: false,
                     target: false
                 };
             }
         }
-        copy[startCopy[0]][startCopy[1]].start = true;
-        copy[targetCopy[0]][targetCopy[1]].target = true;
-        setTarget(targetCopy);
+        copy[i[0]][i[1]].start = true;
+        copy[j[0]][j[1]].target = true;
+        setTarget(copy[j[0]][j[1]]);
+        copy[j[0]][j[1]].blocked = false;
+        setStart(copy[i[0]][i[1]]);
+        copy[i[0]][i[1]].blocked = false;
         setMatrix(copy);
-        setStart(startCopy);
     }, []);
 
     const onHoverHandler = (i, j) => {
         if(mouseDown) {
-            const copy = [...matrix];
+            const copy = JSON.parse(JSON.stringify(matrix));
             if (!copy[i][j].start && !copy[i][j].target && !startSelected && !targetSelected) {
                 copy[i][j].blocked = !copy[i][j].blocked;
-                setMatrix(copy);
+            } else if (startSelected) {
+                if(!copy[i][j].target) {
+                    copy[start.x][start.y].start = false;
+                    copy[i][j].start = true;
+                    setStart(copy[i][j]);
+                }
+            } else if(targetSelected) {
+                if(!copy[i][j].start) {
+                    copy[target.x][target.y].target = false;
+                    copy[i][j].target = true;
+                    setTarget(copy[i][j]);
+                }
             }
+            setMatrix(copy);
         }
     };
 
     const onClickHandler = (e, i, j) => {
         e.preventDefault();
-        const copy = [...matrix];
+        const copy = JSON.parse(JSON.stringify(matrix));
         if (!copy[i][j].start && !copy[i][j].target) {
             copy[i][j].blocked = !copy[i][j].blocked;
+            setMatrix(copy);
         } else if (copy[i][j].start) {
             setStartSelected(true);
-            copy[i][j].start = false;
+            //copy[i][j].start = false;
         } else if (copy[i][j].target) {
             setTargetSelected(true);
-            copy[i][j].target = false;
+            //copy[i][j].target = false;
         }
-        setMatrix(copy);
     };
 
     const onReleasedHandler = (i, j) => {
-        const copy = [...matrix];
+        const copy = JSON.parse(JSON.stringify(matrix));
         if(startSelected) {
-            if(copy[i][j].target) {
-                copy[start[0]][start[1]].start = true;
-            } else {
-                copy[i][j].blocked = false;
-                copy[i][j].start = true;
-                setStart([i,j]);
-            }
             setStartSelected(false);
-        }
-        if(targetSelected) {
-            if(copy[i][j].start) {
-                copy[target[0]][target[1]].target = true;
-            } else {
-                copy[i][j].blocked = false;
-                copy[i][j].target = true;
-                setTarget([i,j]);
-            }
+            copy[i][j].blocked = false;
+            setMatrix(copy);
+        } else if(targetSelected) {
             setTargetSelected(false);
+            copy[i][j].blocked = false;
+            setMatrix(copy);
         }
-        setMatrix(copy);
     };
 
     return (
