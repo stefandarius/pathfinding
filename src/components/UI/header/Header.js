@@ -152,6 +152,10 @@ const Header = () => {
             <span className={classes.inline}>
                <button className={classes.Button} onClick={onClickHandler}>CLEAR GRID</button>
             </span>
+            <span className={classes.inline}>
+                <p style={{fontSize: 20}}>Build or remove walls by clicking the tiles</p>
+                <p style={{fontSize: 20}}>Move starting and ending points anywhere you want</p>
+            </span>
         </div>
     );
 };
